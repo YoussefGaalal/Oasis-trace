@@ -40,11 +40,22 @@ node_modules/
 *.pfx
 
 # ----- BMAD output & analysis artifacts --------------------
+_bmad/
 _bmad-output/
-_bmad/custom/.gitignore  # tracked separately; exclude the meta-file
 *.bmad-output.md
 *-analysis-report.html
 *-analysis-report.json
+BMAD_Analysis.html
+Backend_Deep_Analysis.html
+*.html
+
+# ----- Claude / Cowork internal files ----------------------
+.claude/
+
+# ----- Word temp files --------------------------------------
+~$*.docx
+~$*.xlsx
+~$*.pptx
 
 # ----- Local generation/helper scripts (not part of the project) -----------
 install-bmad-skills.ps1
