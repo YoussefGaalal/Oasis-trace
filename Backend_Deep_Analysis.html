@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Oasis — Backend Deep Analysis</title>
+<style>
+  :root{--blue:#1A5276;--blue-mid:#2E86C1;--blue-light:#D6EAF8;--blue-pale:#EBF5FB;--accent:#E67E22;--danger:#C0392B;--danger-bg:#FDEDEC;--warn:#D4AC0D;--warn-bg:#FEF9E7;--ok:#1E8449;--ok-bg:#EAFAF1;--gray1:#F4F6F7;--gray2:#D5D8DC;--text:#1C2833;--code-bg:#1E2A38;--code-text:#ABD1E8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:14px;color:var(--text);background:#fff;line-height:1.65}
+  .sidebar{position:fixed;top:0;left:0;width:248px;height:100vh;background:var(--blue);overflow-y:auto;padding:20px 0;z-index:100;scrollbar-width:thin}
+  .sidebar .logo{padding:0 18px 18px;border-bottom:1px solid rgba(255,255,255,.18);margin-bottom:14px}
+  .sidebar .logo h1{color:#fff;font-size:20px;font-weight:900;letter-spacing:1.5px}
+  .sidebar .logo p{color:#aed6f1;font-size:11px;margin-top:3px}
+  .sidebar nav a{display:block;padding:6px 18px;color:#aed6f1;text-decoration:none;font-size:12px;transition:background .15s;line-height:1.5}
+  .sidebar nav a:hover,.sidebar nav a.active{background:rgba(255,255,255,.12);color:#fff}
+  .sidebar nav .section-label{padding:12px 18px 3px;font-size:9.5px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.4);font-weight:700}
+  .main{margin-left:248px;padding:36px 48px;max-width:1160px}
+  /* Cover */
+  .cover{background:linear-gradient(135deg,#1a3a52 0%,var(--blue-mid) 100%);color:#fff;padding:52px;border-radius:10px;margin-bottom:44px}
+  .cover h1{font-size:42px;font-weight:900;letter-spacing:2px}.cover p{font-size:17px;opacity:.85;margin-top:6px}
+  .cover .stack{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .cover .chip{background:rgba(255,255,255,.15);padding:5px 14px;border-radius:20px;font-size:12px;border:1px solid rgba(255,255,255,.25)}
+  /* Section headings */
+  section{margin-bottom:52px;scroll-margin-top:20px}
+  h2.sh{font-size:24px;color:var(--blue);border-bottom:3px solid var(--blue-mid);padding-bottom:10px;margin-bottom:22px;display:flex;align-items:center;gap:10px}
+  h2.sh .pill{background:var(--blue);color:#fff;font-size:12px;padding:2px 11px;border-radius:20px;font-weight:700;white-space:nowrap}
+  h3.sh3{font-size:16px;font-weight:700;color:var(--blue-mid);margin:22px 0 9px;padding-left:10px;border-left:3px solid var(--blue-mid)}
+  h4.sh4{font-size:14px;font-weight:700;color:var(--text);margin:16px 0 7px}
+  p.body{margin-bottom:11px;line-height:1.7}
+  ul.ul{padding-left:22px;margin-bottom:11px}
+  ul.ul li{margin-bottom:5px;line-height:1.65}
+  /* Callouts */
+  .callout{border-left:4px solid;padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0;font-size:13px}
+  .callout.danger{border-color:var(--danger);background:var(--danger-bg)}
+  .callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+  .callout.ok{border-color:var(--ok);background:var(--ok-bg)}
+  .callout.info{border-color:var(--blue-mid);background:var(--blue-pale)}
+  .callout strong{text-transform:uppercase;font-size:10.5px;letter-spacing:.8px}
+  /* Tables */
+  .tbl{overflow-x:auto;margin:14px 0 22px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead tr{background:var(--blue)}
+  thead th{color:#fff;padding:9px 13px;text-align:left;font-size:12px;white-space:nowrap}
+  tbody tr:nth-child(even){background:var(--gray1)}
+  tbody tr:hover{background:#e8f4fc}
+  tbody td{padding:8px 13px;border-bottom:1px solid var(--gray2);vertical-align:top;line-height:1.55}
+  .br{background:var(--danger-bg);color:var(--danger);font-weight:700;padding:1px 7px;border-radius:3px;font-size:11.5px;white-space:nowrap}
+  .ba{background:var(--warn-bg);color:#8a6d0a;font-weight:700;padding:1px 7px;border-radius:3px;font-size:11.5px;white-space:nowrap}
+  .bg{background:var(--ok-bg);color:var(--ok);font-weight:700;padding:1px 7px;border-radius:3px;font-size:11.5px;white-space:nowrap}
+  /* Code blocks */
+  .code{background:var(--code-bg);border-radius:7px;margin:12px 0 18px;overflow:hidden}
+  .code .code-label{background:rgba(255,255,255,.07);padding:5px 14px;font-size:10.5px;color:#7fb3d3;font-family:'Courier New',monospace;border-bottom:1px solid rgba(255,255,255,.08)}
+  .code pre{padding:16px;font-family:'Courier New',monospace;font-size:12.5px;line-height:1.6;overflow-x:auto;color:var(--code-text)}
+  .code pre .k{color:#e06c75} /* keyword / danger */
+  .code pre .g{color:#98c379} /* green / ok */
+  .code pre .y{color:#e5c07b} /* yellow / method */
+  .code pre .b{color:#61afef} /* blue / type */
+  .code pre .c{color:#5c6370;font-style:italic} /* comment */
+  .code pre .w{color:#fff}
+  /* Inline code */
+  code{background:#f0f4f8;padding:1px 6px;border-radius:3px;font-size:12px;font-family:'Courier New',monospace;color:var(--danger)}
+  /* Flow diagram */
+  .flow{margin:14px 0;counter-reset:fc}
+  .flow-step{display:flex;gap:14px;margin-bottom:10px;align-items:flex-start}
+  .flow-step::before{counter-increment:fc;content:counter(fc);background:var(--blue-mid);color:#fff;border-radius:50%;min-width:24px;height:24px;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .flow-step p{font-size:13px;margin:0;line-height:1.6}
+  .flow-step p strong{color:var(--blue)}
+  /* ERD */
+  .erd{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0}
+  .erd-table{border:2px solid var(--blue-mid);border-radius:7px;overflow:hidden;min-width:200px;flex:1}
+  .erd-table .erd-head{background:var(--blue);color:#fff;padding:7px 13px;font-weight:700;font-size:12.5px}
+  .erd-table .erd-row{padding:5px 13px;font-size:12px;border-bottom:1px solid var(--gray2);display:flex;gap:8px;align-items:baseline}
+  .erd-table .erd-row:last-child{border-bottom:none}
+  .erd-table .erd-row:nth-child(even){background:var(--gray1)}
+  .pk{color:var(--warn);font-size:10px;font-weight:700}
+  .fk{color:var(--blue-mid);font-size:10px;font-weight:700}
+  .type{color:#7f8c8d;font-size:11px}
+  /* Scalability cards */
+  .scale-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin:16px 0}
+  .scale-card{border:1px solid var(--gray2);border-radius:8px;padding:18px;border-top:4px solid var(--blue-mid)}
+  .scale-card h4{font-size:13.5px;color:var(--blue);margin-bottom:8px}
+  .scale-card p{font-size:12.5px;line-height:1.6;color:#444}
+  .scale-card code{font-size:11.5px}
+  .scale-card.crit{border-top-color:var(--danger)}
+  .scale-card.warn{border-top-color:var(--warn)}
+  .scale-card.ok{border-top-color:var(--ok)}
+  /* Stat bar */
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;margin:22px 0}
+  .stat{flex:1;min-width:110px;background:var(--blue-pale);border-radius:7px;padding:14px 16px;text-align:center;border:1px solid #aed6f1}
+  .stat .n{font-size:28px;font-weight:900;color:var(--blue)}
+  .stat .l{font-size:11px;color:var(--blue-mid);margin-top:3px}
+  .stat.danger-s{background:var(--danger-bg);border-color:#f1948a}.stat.danger-s .n{color:var(--danger)}
+  .stat.warn-s{background:var(--warn-bg);border-color:#f7dc6f}.stat.warn-s .n{color:#8a6d0a}
+  .stat.ok-s{background:var(--ok-bg);border-color:#82e0aa}.stat.ok-s .n{color:var(--ok)}
+  @media print{.sidebar{display:none}.main{margin-left:0;padding:20px}}
+  @media(max-width:900px){.sidebar{display:none}.main{margin-left:0;padding:20px}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo"><h1>OASIS</h1><p>Backend Deep Analysis</p></div>
+  <nav>
+    <div class="section-label">Overview</div>
+    <a href="#cover">Summary</a>
+    <div class="section-label">1. Authentication</div>
+    <a href="#auth-flow">1.1 Sanctum Flow</a>
+    <a href="#auth-password">1.2 Password Reset</a>
+    <a href="#auth-fallback">1.3 Header Fallback</a>
+    <a href="#auth-issues">1.4 Auth Issues</a>
+    <div class="section-label">2. Module: Animals</div>
+    <a href="#ani-overview">2.1 Overview</a>
+    <a href="#ani-photo">2.2 Photo Upload</a>
+    <a href="#ani-id">2.3 ID Generation</a>
+    <a href="#ani-issues">2.4 Issues</a>
+    <div class="section-label">3. Module: Geofencing</div>
+    <a href="#geo-overview">3.1 Overview</a>
+    <a href="#geo-detection">3.2 Violation Detection</a>
+    <a href="#geo-notification">3.3 Notifications</a>
+    <a href="#geo-issues">3.4 Issues</a>
+    <div class="section-label">4. Module: Auctions</div>
+    <a href="#auc-overview">4.1 Overview</a>
+    <a href="#auc-bidding">4.2 Bidding Logic</a>
+    <a href="#auc-payment">4.3 Payment Paths</a>
+    <a href="#auc-issues">4.4 Issues</a>
+    <div class="section-label">5. Module: Tasks</div>
+    <a href="#task-overview">5.1 Overview</a>
+    <a href="#task-recurrence">5.2 Recurrence Engine</a>
+    <a href="#task-access">5.3 Access Control</a>
+    <a href="#task-issues">5.4 Issues</a>
+    <div class="section-label">6. Database</div>
+    <a href="#db-schema">6.1 Schema Map</a>
+    <a href="#db-relations">6.2 Relationships</a>
+    <a href="#db-indexes">6.3 Indexes</a>
+    <a href="#db-issues">6.4 Schema Issues</a>
+    <div class="section-label">7. Scalability</div>
+    <a href="#scale-immediate">7.1 Immediate</a>
+    <a href="#scale-medium">7.2 Medium-Term</a>
+    <a href="#scale-longterm">7.3 Long-Term</a>
+  </nav>
+</div>
+
+<div class="main">
+
+<!-- Cover -->
+<div class="cover" id="cover">
+  <h1>Backend Deep Analysis</h1>
+  <p>Oasis Livestock Tracking Platform — Laravel 11 API</p>
+  <div class="stack">
+    <span class="chip">Laravel 11 / PHP 8.2</span>
+    <span class="chip">Sanctum Bearer Auth</span>
+    <span class="chip">Spatie RBAC</span>
+    <span class="chip">MySQL</span>
+    <span class="chip">Stripe</span>
+    <span class="chip">Twilio + WhatsApp</span>
+    <span class="chip">Gemini AI</span>
+  </div>
+</div>
+
+<div class="statrow">
+  <div class="stat"><div class="n">9</div><div class="l">Controller Namespaces</div></div>
+  <div class="stat"><div class="n">18</div><div class="l">Eloquent Models</div></div>
+  <div class="stat"><div class="n">23</div><div class="l">DB Migrations</div></div>
+  <div class="stat"><div class="n">252</div><div class="l">Route Lines</div></div>
+  <div class="stat danger-s"><div class="n">6</div><div class="l">Critical Bugs Found</div></div>
+  <div class="stat warn-s"><div class="n">11</div><div class="l">Medium Issues</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 1. AUTHENTICATION -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="auth-flow">
+  <h2 class="sh"><span class="pill">1</span> Authentication (Sanctum)</h2>
+  <h3 class="sh3">1.1 Login & Token Flow</h3>
+  <p class="body">Oasis uses Laravel Sanctum's <strong>opaque token</strong> (not SPA cookie) strategy. On login, a plaintext token is created and returned to the client, which stores it (cookies in React, SharedPreferences in Flutter) and sends it as <code>Authorization: Bearer {token}</code> on subsequent requests.</p>
+
+  <div class="flow">
+    <div class="flow-step"><p><strong>POST /api/auth/login</strong> — Client sends email + password (+ optional language preference)</p></div>
+    <div class="flow-step"><p>AuthController validates fields, queries <code>users</code> by email with <code>User::where('email')->first()</code></p></div>
+    <div class="flow-step"><p><code>Hash::check(password, user->password)</code> — bcrypt comparison. Returns <code>401</code> on mismatch. Intentionally vague ("Invalid credentials") to prevent user enumeration.</p></div>
+    <div class="flow-step"><p><code>$user->is_active</code> checked — inactive accounts return <code>403 account_inactive</code></p></div>
+    <div class="flow-step"><p><code>$user->createToken('auth-token')->plainTextToken</code> — Sanctum creates a row in <code>personal_access_tokens</code> and returns the token</p></div>
+    <div class="flow-step"><p>Response includes the token + a user payload (id, name, email, role, roles[], language, subscriptionTier). Token is NOT stored server-side in session — it is the credential.</p></div>
+    <div class="flow-step"><p>On subsequent requests: Laravel's <code>auth:sanctum</code> middleware finds the token in the request header, looks up <code>personal_access_tokens</code>, hydrates the User, and makes it available via <code>$request->user()</code></p></div>
+  </div>
+
+  <div class="code">
+    <div class="code-label">AuthController.php — login() key logic</div>
+    <pre><span class="c">// 1. Credential check</span>
+<span class="b">$user</span> = User::<span class="y">where</span>(<span class="g">'email'</span>, <span class="b">$request</span>->email)-><span class="y">first</span>();
+<span class="b">Hash</span>::<span class="y">check</span>(<span class="b">$request</span>->password, <span class="b">$user</span>->password); <span class="c">// bcrypt</span>
+
+<span class="c">// 2. Active check</span>
+<span class="k">if</span> (!<span class="b">$user</span>->is_active) <span class="k">return</span> <span class="y">response</span>()-><span class="y">json</span>([...], <span class="g">403</span>);
+
+<span class="c">// 3. Token creation (Sanctum)</span>
+<span class="b">$token</span> = <span class="b">$user</span>-><span class="y">createToken</span>(<span class="g">'auth-token'</span>)-><span class="w">plainTextToken</span>;
+
+<span class="c">// 4. Role resolution (Spatie)</span>
+<span class="b">$user</span>-><span class="y">getPrimaryRoleName</span>(); <span class="c">// → getRoleNames()->first() ?? 'Owner'</span></pre>
+  </div>
+
+  <h3 class="sh3">1.2 Password Reset (Custom Implementation)</h3>
+  <p class="body">Laravel's built-in <code>Password::sendResetLink()</code> is imported but <strong>not used</strong>. Instead, a completely custom reset flow is implemented that stores tokens directly on the <code>users</code> table:</p>
+  <ul class="ul">
+    <li>Token: <code>Str::random(64)</code> stored in <code>users.password_reset_token</code></li>
+    <li>Expiry: <code>users.password_reset_expires</code> set to <code>now()->addHours(24)</code></li>
+    <li>Email integration is commented out with a <code>// TODO</code> — the reset URL is currently returned directly in the API response as <code>debug_url</code></li>
+  </ul>
+
+  <div class="callout danger">
+    <strong>Critical — Token in API Response Body:</strong> <code>forgotPassword()</code> returns the raw reset token as <code>"debug_url"</code> in the JSON response. This means the reset token is transmitted in clear JSON, visible in logs, proxies, and browser developer tools. Anyone who intercepts a forgot-password API call can obtain the reset token and hijack the account. The email integration must be completed and <code>debug_url</code> removed from the response.
+  </div>
+
+  <div class="callout warn">
+    <strong>Warning — Non-Standard Reset Storage:</strong> Laravel convention is to store reset tokens in the <code>password_reset_tokens</code> table (included by default in fresh installs). Storing them on the <code>users</code> table adds nullable columns to the main user record, wastes space for non-resetting users, and lacks the automatic cleanup that the built-in password broker provides.
+  </div>
+</section>
+
+<section id="auth-fallback">
+  <h3 class="sh3">1.3 The Header-Fallback Auth Pattern (X-User-Id / X-User-Role)</h3>
+  <p class="body">Nearly every controller uses the <code>OwnableAuthorization</code> trait, which contains a dual-path identity resolution system:</p>
+
+  <div class="code">
+    <div class="code-label">OwnableAuthorization.php — identity resolution</div>
+    <pre><span class="k">private function</span> <span class="y">getUserId</span>(Request <span class="b">$request</span>): ?string
+{
+    <span class="c">// Path 1: Proper Sanctum token auth</span>
+    <span class="k">if</span> (<span class="b">$request</span>-><span class="y">user</span>()) {
+        <span class="k">return</span> (string) <span class="b">$request</span>-><span class="y">user</span>()-><span class="w">id</span>;
+    }
+    <span class="c">// Path 2: Plain HTTP header — anyone can forge this!</span>
+    <span class="k">return</span> <span class="b">$request</span>-><span class="y">header</span>(<span class="g">'X-User-Id'</span>);
+}
+
+<span class="k">private function</span> <span class="y">getUserRole</span>(Request <span class="b">$request</span>): ?string
+{
+    <span class="k">if</span> (<span class="b">$request</span>-><span class="y">user</span>()) {
+        <span class="k">return</span> <span class="b">$request</span>-><span class="y">user</span>()-><span class="y">getPrimaryRoleName</span>();
+    }
+    <span class="c">// Path 2: Plain header — forge X-User-Role: Admin to escalate</span>
+    <span class="k">return</span> <span class="b">$request</span>-><span class="y">header</span>(<span class="g">'X-User-Role'</span>);
+}</pre>
+  </div>
+
+  <div class="callout danger">
+    <strong>Critical — Privilege Escalation via Forged Headers:</strong> Because most routes lack <code>auth:sanctum</code> middleware, <code>$request->user()</code> returns <code>null</code> and the trait falls through to reading raw HTTP headers. Any caller can set <code>X-User-Role: Admin</code> and <code>X-User-Id: 1</code> to impersonate the admin user. This completely bypasses the RBAC system. Fix: add <code>auth:sanctum</code> to all routes; remove the header fallback path once Sanctum is properly wired.
+  </div>
+</section>
+
+<section id="auth-issues">
+  <h3 class="sh3">1.4 Complete Auth Issue Register</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>#</th><th>Issue</th><th>Location</th><th>Severity</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>debug_url</code> leaks reset token in API response</td><td>AuthController::forgotPassword()</td><td><span class="br">Critical</span></td><td>Send via email only; remove debug_url</td></tr>
+        <tr><td>2</td><td>X-User-Role header accepted without auth — privilege escalation</td><td>OwnableAuthorization trait</td><td><span class="br">Critical</span></td><td>Add auth:sanctum everywhere; remove header fallback</td></tr>
+        <tr><td>3</td><td>Reset token stored on users table (not password_reset_tokens)</td><td>users table + AuthController</td><td><span class="ba">Medium</span></td><td>Use Laravel's built-in Password broker</td></tr>
+        <tr><td>4</td><td>updateProfile() validates language as <code>in:en,ar</code> — missing ur, eu</td><td>AuthController::updateProfile()</td><td><span class="ba">Medium</span></td><td>Update to <code>in:en,ar,ur,eu</code></td></tr>
+        <tr><td>5</td><td>setLocale() writes to <code>$user->settings</code> JSON column not in $fillable — silently fails</td><td>AuthController::setLocale()</td><td><span class="ba">Medium</span></td><td>Add 'settings' to User::$fillable or use update()</td></tr>
+        <tr><td>6</td><td>logout() silently catches all exceptions — real errors masked</td><td>AuthController::logout()</td><td><span class="bg">Low</span></td><td>Catch specific exceptions; log unexpected ones</td></tr>
+        <tr><td>7</td><td>OwnableAuthorization::canAccessOwner() still checks for 'Doctor' role (deprecated)</td><td>OwnableAuthorization.php:52</td><td><span class="ba">Medium</span></td><td>Replace 'Doctor' with 'Veterinarian'</td></tr>
+        <tr><td>8</td><td>Duplicate login routes: POST /auth/login AND POST /login</td><td>routes/api.php</td><td><span class="ba">Medium</span></td><td>Remove POST /login; keep namespaced route only</td></tr>
+        <tr><td>9</td><td>No rate limiting on login endpoint (brute force possible)</td><td>routes/api.php</td><td><span class="ba">Medium</span></td><td>Add throttle:10,1 middleware to login routes</td></tr>
+        <tr><td>10</td><td>No token expiry configured (tokens live forever by default)</td><td>config/sanctum.php</td><td><span class="ba">Medium</span></td><td>Set expiration in sanctum.php; prune stale tokens via schedule</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 2. ANIMALS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="ani-overview">
+  <h2 class="sh"><span class="pill">2</span> Module: Animals</h2>
+  <h3 class="sh3">2.1 Overview</h3>
+  <p class="body">The Animal module is the core entity. <code>AnimalController</code> handles CRUD, photo uploads, and ownership transfer. It uses the <code>OwnableAuthorization</code> trait for all access decisions and applies the <code>limits:animals</code> middleware for subscription enforcement. API Resources (<code>AnimalResource</code>) handle response shaping.</p>
+
+  <h4 class="sh4">Key capabilities</h4>
+  <ul class="ul">
+    <li>Full CRUD with permission check (<code>manage_animals</code>) on write operations</li>
+    <li>Dual photo upload: multipart file upload OR base64-encoded data URI in JSON body</li>
+    <li>Role-aware owner assignment (Owner → self, Manager → managed_by owner, Admin → nullable)</li>
+    <li>Ownership transfer between Admin/Owner users with role validation</li>
+    <li>Eager-loads owner, device, groups, geofences on list queries</li>
+  </ul>
+</section>
+
+<section id="ani-photo">
+  <h3 class="sh3">2.2 Photo Upload — Dual Strategy</h3>
+  <p class="body">The controller handles two completely different upload paths within the same request handler:</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Path</th><th>Detection</th><th>Storage</th><th>Concerns</th></tr></thead>
+      <tbody>
+        <tr><td>Multipart file</td><td><code>$request->hasFile('identification_photo')</code></td><td>storeAs → public/images/</td><td>Correct approach; no size limit enforced in controller</td></tr>
+        <tr><td>Base64 data URI</td><td>String starting with <code>data:image</code></td><td>base64_decode → Storage::put()</td><td>Entire image travels in JSON body; no size limit; always stored as .png regardless of source type; no MIME validation; memory pressure on large images</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout warn">
+    <strong>Warning — Base64 Upload Path:</strong> Sending images as base64 strings inside a JSON payload inflates payload size by ~33%. There is no validation on image type, dimensions, or file size in the base64 path. A malicious actor could send a very large base64 string causing PHP memory exhaustion. The fix is to remove the base64 path entirely and enforce multipart/form-data uploads via <code>StoreAnimalRequest</code>.
+  </div>
+</section>
+
+<section id="ani-id">
+  <h3 class="sh3">2.3 Animal ID Generation — Race Condition</h3>
+  <p class="body">Animal IDs are generated in two places, and they conflict:</p>
+
+  <div class="code">
+    <div class="code-label">AnimalController::store() — ⚠️ race condition</div>
+    <pre><span class="c">// In the controller — uses COUNT(*) which races:</span>
+<span class="b">$data</span>[<span class="g">'animal_id'</span>] = <span class="g">'OA-'</span> . <span class="y">date</span>(<span class="g">'Y'</span>) . <span class="g">'-'</span> . <span class="y">str_pad</span>(Animal::<span class="y">count</span>() + <span class="g">1</span>, <span class="g">4</span>, <span class="g">'0'</span>, STR_PAD_LEFT);
+
+<span class="c">// In Animal::boot() — correct approach using MAX(animal_id) per year:</span>
+<span class="b">$latest</span> = <span class="y">static</span>::<span class="y">where</span>(<span class="g">'animal_id'</span>, <span class="g">'like'</span>, <span class="g">"OA-{$year}-%"</span>)
+    -><span class="y">orderByDesc</span>(<span class="g">'animal_id'</span>)
+    -><span class="y">first</span>();</pre>
+  </div>
+
+  <p class="body">The controller sets <code>$data['animal_id']</code> before calling <code>Animal::create()</code>, which then triggers the model's <code>boot()</code> hook — but the hook only runs <code>if (empty($animal->animal_id))</code>, so it's skipped. The controller's version uses <code>Animal::count() + 1</code>, which:</p>
+  <ul class="ul">
+    <li>Produces duplicates under concurrent creation (two requests read count=100 simultaneously → both try to create OA-2026-0101)</li>
+    <li>Breaks after any deletion (count drops, next ID collides with a deleted one)</li>
+    <li>Resets the sequence cross-year incorrectly</li>
+  </ul>
+
+  <div class="callout danger">
+    <strong>Critical — Duplicate Animal IDs:</strong> Under concurrent usage, multiple animals can receive the same ID. The <code>animal_id</code> column has a UNIQUE index, so the second concurrent insert will fail with an unhandled database exception. Fix: remove the ID assignment from the controller entirely and let the Model's <code>boot()</code> handle it (it uses the correct MAX pattern). Better still: use a dedicated DB sequence or atomic counter.
+  </div>
+</section>
+
+<section id="ani-issues">
+  <h3 class="sh3">2.4 Animal Module Issues</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Animal ID uses Animal::count() — race condition under concurrency</td><td><span class="br">Critical</span></td><td>Remove controller ID assignment; rely on model boot() or DB sequence</td></tr>
+        <tr><td>Base64 upload in JSON: no size limit, no MIME validation, ~33% payload inflation</td><td><span class="ba">Medium</span></td><td>Remove base64 path; enforce multipart-only in StoreAnimalRequest</td></tr>
+        <tr><td>No file size validation on multipart path either</td><td><span class="ba">Medium</span></td><td>Add <code>'identification_photo' => 'file|image|max:5120'</code> to request rules</td></tr>
+        <tr><td>index() eager-loads groups + geofences — heavy for large datasets</td><td><span class="ba">Medium</span></td><td>Make eager-loads opt-in via query param; add pagination (default 100 is too high)</td></tr>
+        <tr><td>Animal::species stored as ENUM in DB but string in model $fillable — no FK to species table</td><td><span class="ba">Medium</span></td><td>Add species_id FK; migrate species to reference table</td></tr>
+        <tr><td>transferOwnership() doesn't check for active auctions on the animal</td><td><span class="ba">Medium</span></td><td>Block transfer if auction.status = 'active' or 'sold'</td></tr>
+        <tr><td>Images stored in local storage (public/images/) — won't work on multi-server or serverless</td><td><span class="bg">Low</span></td><td>Switch to S3/Cloudflare R2 via env-configurable disk driver</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 3. GEOFENCING -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="geo-overview">
+  <h2 class="sh"><span class="pill">3</span> Module: Geofencing</h2>
+  <h3 class="sh3">3.1 Overview</h3>
+  <p class="body">Two controllers handle geofencing: <code>GeofenceController</code> manages zone CRUD and alert management, and <code>LocationHistoryController::store()</code> is the GPS ingestion endpoint that triggers violation detection. The <code>NotificationService</code> dispatches alerts via SMS/WhatsApp/call.</p>
+  <p class="body">The geofencing pipeline is entirely synchronous and runs inline with the GPS write request — meaning every GPS ping blocks the HTTP thread for the full duration of geofence checks and notification delivery.</p>
+</section>
+
+<section id="geo-detection">
+  <h3 class="sh3">3.2 Violation Detection Pipeline (Critical Path)</h3>
+
+  <div class="flow">
+    <div class="flow-step"><p><strong>POST /api/location-history</strong> — GPS device sends device_id, latitude, longitude, speed, heading</p></div>
+    <div class="flow-step"><p>Device lookup → find associated animal. <code>Device::findOrFail()</code> then <code>Animal::find(device->animal_id)</code></p></div>
+    <div class="flow-step"><p>Location row inserted into <code>location_history</code> table. Device row updated (gps_lat, gps_lng, last_ping, status='online')</p></div>
+    <div class="flow-step"><p><code>checkGeofences(animal, lat, lng)</code> called — fetches <strong>ALL active geofences from DB</strong>, then filters in PHP by owner_id match</p></div>
+    <div class="flow-step"><p>For each geofence: look up cached state <code>cache()->get("geofence_{id}_animal_{id}_inside")</code>. If key not found → assume current state, skip alert on first ping.</p></div>
+    <div class="flow-step"><p>Run <code>Geofence::containsPoint(lat, lng)</code> — pure PHP ray-casting algorithm. Compare with cached state.</p></div>
+    <div class="flow-step"><p>If state changed (entry or exit matches <code>alert_type</code>): insert <code>GeofenceAlert</code>, call <code>NotificationService::sendGeofenceAlert()</code> synchronously</p></div>
+    <div class="flow-step"><p><strong>Inline cleanup:</strong> Deletes all <code>location_history</code> rows older than 5 hours for this animal — in the same request!</p></div>
+  </div>
+
+  <div class="callout danger">
+    <strong>Critical — Geofence Query Fetches ALL Active Geofences:</strong> <code>checkGeofences()</code> calls <code>Geofence::where('is_active', true)->get()</code> — this loads every geofence in the system into memory, then filters by owner in PHP. As the platform scales, this will degrade to scanning thousands of geofences per GPS ping. Fix: query only geofences assigned to this specific animal using the pivot table.
+  </div>
+
+  <div class="code">
+    <div class="code-label">LocationHistoryController.php — the scalability problem</div>
+    <pre><span class="c">// ❌ Current: Fetches ALL geofences from DB into memory</span>
+<span class="b">$geofences</span> = Geofence::<span class="y">where</span>(<span class="g">'is_active'</span>, <span class="g">true</span>)-><span class="y">get</span>();
+<span class="b">$geofences</span> = <span class="b">$geofences</span>-><span class="y">filter</span>(<span class="k">fn</span>(<span class="b">$g</span>) => <span class="b">$g</span>->owner_id === <span class="b">$animal</span>->owner_id);
+
+<span class="c">// ✅ Better: Query only geofences assigned to this animal</span>
+<span class="b">$geofences</span> = <span class="b">$animal</span>-><span class="y">geofences</span>()-><span class="y">where</span>(<span class="g">'is_active'</span>, <span class="g">true</span>)-><span class="y">get</span>();
+
+<span class="c">// ✅ Best: Use DB spatial functions (requires migrating to GEOMETRY type)</span>
+<span class="c">// ST_Contains(geofence.polygon, ST_GeomFromText("POINT(lat lng)"))</span></pre>
+  </div>
+</section>
+
+<section id="geo-notification">
+  <h3 class="sh3">3.3 NotificationService</h3>
+  <p class="body">The <code>NotificationService</code> is a concrete class (not a Laravel Notification) injected via constructor into both <code>GeofenceController</code> and <code>LocationHistoryController</code>. It dispatches alerts across three channels sequentially.</p>
+
+  <div class="callout warn">
+    <strong>Warning — 6+ Synchronous DB Queries per Alert:</strong> <code>getSetting(key)</code> hits <code>DB::table('settings')->where('key',...)->first()</code> with a fresh query every call. It's called once for each of: twilio_account_sid, twilio_auth_token, twilio_phone_number, twilio_enabled, whatsapp_api_url, whatsapp_api_token, whatsapp_phone_number_id, whatsapp_enabled — totalling 8+ sequential DB hits before a single SMS is sent. Fix: cache settings with <code>Cache::remember()</code> for 5 minutes.
+  </div>
+
+  <div class="callout warn">
+    <strong>Warning — isSmsEnabled() and isCallEnabled() use the same setting key:</strong> Both methods check <code>getSetting('twilio_enabled')</code>. Enabling Twilio for SMS also enables voice calls. These should be separate boolean settings.
+  </div>
+
+  <p class="body">The alert message is hardcoded with a camel emoji: <code>"🐪 Oasis Alert: {animal_id} has {entered|exited} {geofence_name}"</code>. This is species-specific branding that doesn't fit goat or sheep owners.</p>
+</section>
+
+<section id="geo-issues">
+  <h3 class="sh3">3.4 Geofencing Issues</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>checkGeofences() fetches ALL geofences — O(n) per GPS ping, scales badly</td><td><span class="br">Critical</span></td><td>Query only <code>$animal->geofences()->where('is_active',true)->get()</code></td></tr>
+        <tr><td>Geofence entry state cached with file driver — lost on restart, not multi-server safe</td><td><span class="br">Critical</span></td><td>Switch to Redis cache; key: geofence_{id}_animal_{id}_inside</td></tr>
+        <tr><td>5-hour location_history cleanup runs inline in the HTTP request (adds latency)</td><td><span class="ba">Medium</span></td><td>Move to a scheduled artisan command (daily or hourly)</td></tr>
+        <tr><td>NotificationService calls getSetting() 8+ times per alert — synchronous DB hits</td><td><span class="ba">Medium</span></td><td>Cache settings: <code>Cache::remember('app_settings', 300, fn() => Settings::all())</code></td></tr>
+        <tr><td>geofence_alerts migration missing latitude, longitude, notification_sent, notification_sent_at columns used in code</td><td><span class="ba">Medium</span></td><td>Add missing columns to geofence_alerts migration</td></tr>
+        <tr><td>isSmsEnabled() and isCallEnabled() use same setting key (twilio_enabled)</td><td><span class="ba">Medium</span></td><td>Add separate sms_enabled and call_enabled settings</td></tr>
+        <tr><td>sendBulkNotifications() hardcoded limit of 10 alerts</td><td><span class="bg">Low</span></td><td>Make limit configurable via request param with a safe max</td></tr>
+        <tr><td>Coordinates stored as TEXT — no spatial indexing possible</td><td><span class="bg">Low</span></td><td>Migrate to MySQL POLYGON type for ST_Contains queries</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 4. AUCTIONS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="auc-overview">
+  <h2 class="sh"><span class="pill">4</span> Module: Auctions</h2>
+  <h3 class="sh3">4.1 Overview</h3>
+  <p class="body">The auction module is the most complex in the backend — <code>AuctionController</code> is 714 lines and covers listing, bidding, payment processing (Stripe + bank transfer), winner management, and admin verification. The core business objects are <code>Auction</code> and <code>Bid</code>, with auction status flowing through: <code>draft → active → sold/ended/cancelled</code>.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Auction Status</th><th>Meaning</th><th>Payment Status</th></tr></thead>
+      <tbody>
+        <tr><td><code>draft</code></td><td>Created but not yet started</td><td>—</td></tr>
+        <tr><td><code>active</code></td><td>Live, accepting bids</td><td>—</td></tr>
+        <tr><td><code>sold</code></td><td>Winner determined, awaiting payment</td><td>pending → submitted → verified/rejected</td></tr>
+        <tr><td><code>ended</code></td><td>Closed without meeting reserve price or no bids</td><td>—</td></tr>
+        <tr><td><code>cancelled</code></td><td>Manually cancelled by owner</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="auc-bidding">
+  <h3 class="sh3">4.2 Bidding Logic</h3>
+  <div class="flow">
+    <div class="flow-step"><p><strong>POST /auctions/{id}/bid</strong> — Validates <code>amount >= current_price + 1</code> (minimum increment of 1 SAR)</p></div>
+    <div class="flow-step"><p>Owner self-bid check: <code>$auction->owner_id == $userId</code> → 400 error</p></div>
+    <div class="flow-step"><p><code>$auction->isActive()</code> check: status === 'active' AND ends_at is in the future</p></div>
+    <div class="flow-step"><p>Bid row created with amount, user_id, bidder_name, bid_at timestamp</p></div>
+    <div class="flow-step"><p><code>$auction->update(['current_price' => amount])</code> — non-atomic update</p></div>
+  </div>
+
+  <div class="callout danger">
+    <strong>Critical — Non-Atomic Bid Race Condition:</strong> Two simultaneous bids at amounts 510 and 520 SAR can both pass the <code>amount >= current_price + 1</code> check (if current_price is 500), both be inserted, and both trigger the <code>update(current_price)</code>. The winner would be whichever update runs last — but both bids exist in the DB. Auctions can end with a winner whose bid is not the actual highest. Fix: wrap the bid check + update in a DB transaction with a SELECT FOR UPDATE lock on the auction row.
+  </div>
+
+  <div class="callout warn">
+    <strong>Warning — No Bid Minimum Increment Flexibility:</strong> The minimum increment is hardcoded as <code>current_price + 1</code> (1 unit of currency). For auctions with high-value livestock (e.g. 50,000 SAR camels), 1 SAR increments would create thousands of near-identical bids. Consider making the minimum increment configurable per auction.
+  </div>
+</section>
+
+<section id="auc-payment">
+  <h3 class="sh3">4.3 Payment Paths</h3>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Path</th><th>Flow</th><th>Issues</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Stripe Card</strong></td>
+          <td>Winner sends payment_method_id → <code>\Stripe\Charge::create()</code> → on success: <code>payment_status='verified'</code>, animal.owner_id → winner_id</td>
+          <td>Uses legacy Charges API (deprecated); should use PaymentIntents. Currency hardcoded to 'sar'. No webhook handling for async charge results.</td>
+        </tr>
+        <tr>
+          <td><strong>Bank Transfer</strong></td>
+          <td>Winner uploads PDF proof → admin reviews → approve (transfer ownership) / reject (promote second_winner, 24h more)</td>
+          <td>Manual bottleneck; no notification to winner on approval/rejection; payment proof accepts PDF only (no images). Payment window is 48h on end but 24h on rejection.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout warn">
+    <strong>Warning — processExpiredPayments() is Manual:</strong> The route <code>POST /auctions/process-expired-payments</code> must be called manually to expire overdue payments and promote second winners. There is no scheduled artisan command or queue job to run this automatically. Auctions can remain in a "sold + pending" state indefinitely if no one calls this endpoint. Fix: add a scheduled <code>artisan</code> command to run every hour.
+  </div>
+</section>
+
+<section id="auc-issues">
+  <h3 class="sh3">4.4 Auction Issues</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Non-atomic bid: race condition can create duplicate winner bids</td><td><span class="br">Critical</span></td><td>Wrap bid creation in DB::transaction() with SELECT FOR UPDATE on auction</td></tr>
+        <tr><td>Still references deprecated 'Doctor' role in filterByRole()</td><td><span class="ba">Medium</span></td><td>Replace 'Doctor' with 'Veterinarian' (line 75)</td></tr>
+        <tr><td>Stripe uses legacy Charges API (deprecated by Stripe)</td><td><span class="ba">Medium</span></td><td>Migrate to PaymentIntents API with proper webhook handling</td></tr>
+        <tr><td>processExpiredPayments() requires manual HTTP trigger — no scheduler</td><td><span class="ba">Medium</span></td><td>Add to schedule: <code>$schedule->command('auctions:expire-payments')->hourly()</code></td></tr>
+        <tr><td>No notification sent to winner on payment approval/rejection</td><td><span class="ba">Medium</span></td><td>Trigger NotificationService from verifyPayment() on both outcomes</td></tr>
+        <tr><td>Payment window inconsistency: 48h on endAuction(), 24h on verifyPayment() rejection</td><td><span class="ba">Medium</span></td><td>Centralise payment window as a constant or config value</td></tr>
+        <tr><td>transferOwnership() in AnimalController doesn't check for active auctions</td><td><span class="ba">Medium</span></td><td>Block manual ownership transfer if any auction is active/sold on that animal</td></tr>
+        <tr><td>Currency hardcoded to 'sar' in Stripe charge</td><td><span class="bg">Low</span></td><td>Move to config/services.php or admin settings</td></tr>
+        <tr><td>Auctions table missing payment columns in original migration (added implicitly)</td><td><span class="bg">Low</span></td><td>Verify all migrations are accounted for; document additive migration chain</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 5. TASKS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="task-overview">
+  <h2 class="sh"><span class="pill">5</span> Module: Tasks</h2>
+  <h3 class="sh3">5.1 Overview</h3>
+  <p class="body">The task module coordinates livestock care work across the role hierarchy. <code>TaskController</code> handles CRUD and role-scoped filtering. <code>TaskLogController</code> manages completion evidence (photo, voice, GPS). The <code>Task</code> model contains the recurrence engine. Role-based filtering is implemented directly in controller methods rather than using model scopes consistently.</p>
+</section>
+
+<section id="task-recurrence">
+  <h3 class="sh3">5.2 Recurrence Engine</h3>
+  <p class="body">The <code>Task</code> model implements recurring task logic via two methods:</p>
+
+  <div class="code">
+    <div class="code-label">Task.php — recurrence engine</div>
+    <pre><span class="y">calculateNextDueDate</span>(): <span class="c">// Computes next due date based on recurrence_type</span>
+  <span class="g">'daily'</span>  → addDays(interval)
+  <span class="g">'weekly'</span> → addWeeks(interval)
+  <span class="g">'monthly'</span>→ addMonths(interval)
+  <span class="g">'custom'</span> → iterates recurrence_days[] to find next weekday after current due_date
+
+<span class="y">createNextOccurrence</span>(): <span class="c">// Clones task with new due_date, resets status to pending</span>
+  <span class="c">// Called: on task CREATION if is_recurring=true</span>
+  <span class="c">// NOT called: on task completion ← Bug</span></pre>
+  </div>
+
+  <div class="callout danger">
+    <strong>Critical — Recurring Tasks Don't Actually Recur:</strong> <code>createNextOccurrence()</code> is called in <code>TaskController::store()</code> when a task is first created (creating one pre-scheduled next occurrence). But it is <strong>NOT called</strong> in <code>complete()</code> when a task is marked done. So after the pre-created occurrence is completed, the chain stops. The recurrence engine is half-built. Fix: call <code>$task->createNextOccurrence()</code> in the <code>complete()</code> action.
+  </div>
+
+  <div class="callout warn">
+    <strong>Warning — Validation Key Mismatch:</strong> <code>TaskController::store()</code> validates <code>'recurrence_pattern'</code> but the Task model's fillable field and database column is named <code>'recurrence_type'</code>. The validated value is never actually saved under the correct key. Add explicit mapping: <code>$validated['recurrence_type'] = $request->recurrence_pattern</code>.
+  </div>
+</section>
+
+<section id="task-access">
+  <h3 class="sh3">5.3 Access Control Matrix</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Role</th><th>View tasks</th><th>Create</th><th>Update</th><th>Delete</th><th>Complete</th></tr></thead>
+      <tbody>
+        <tr><td>Admin</td><td>All tasks</td><td>✅</td><td>Any field</td><td>✅</td><td>⚠️ No auth check</td></tr>
+        <tr><td>Owner</td><td>Tasks where owner_id = me</td><td>✅</td><td>Any field (own tasks)</td><td>✅ (own)</td><td>⚠️ No auth check</td></tr>
+        <tr><td>Manager</td><td>Tasks of managed users</td><td>✅ (assign to managed)</td><td>Limited fields</td><td>✅ (own)</td><td>⚠️ No auth check</td></tr>
+        <tr><td>Shepherd</td><td>Tasks assigned_to = me</td><td>❌</td><td>Status only (no reassign, no cancel)</td><td>❌</td><td>⚠️ No auth check</td></tr>
+        <tr><td>Veterinarian</td><td>None (returns empty)</td><td>❌</td><td>❌</td><td>❌</td><td>⚠️ No auth check</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout danger">
+    <strong>Critical — complete() Has Zero Authorization:</strong> <code>TaskController::complete(Task $task)</code> has no auth check at all. Any user who knows a task ID can mark it complete — including tasks assigned to other users, tasks belonging to other owners, or tasks they have no relationship with. Fix: add the same <code>canAccessTask()</code> check used in show() and update().
+  </div>
+</section>
+
+<section id="task-issues">
+  <h3 class="sh3">5.4 Task Issues</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>complete() has no authorization check</td><td><span class="br">Critical</span></td><td>Add canAccessTask($request, $task) guard at top of method</td></tr>
+        <tr><td>Recurring tasks don't actually recur — createNextOccurrence() not called on completion</td><td><span class="br">Critical</span></td><td>Call <code>if ($task->is_recurring) $task->createNextOccurrence();</code> in complete()</td></tr>
+        <tr><td>Validation uses 'recurrence_pattern' but model field is 'recurrence_type'</td><td><span class="ba">Medium</span></td><td>Add <code>$validated['recurrence_type'] = $validated['recurrence_pattern']</code> mapping</td></tr>
+        <tr><td>stats() runs 6 separate COUNT queries — should use a single GROUP BY</td><td><span class="ba">Medium</span></td><td>Use <code>selectRaw('status, count(*) as cnt')->groupBy('status')</code></td></tr>
+        <tr><td>Manager assignment validation logic bug (checks managed_by against array incorrectly)</td><td><span class="ba">Medium</span></td><td>Fix: <code>if ($assignee->managed_by != $userId)</code> is the correct check</td></tr>
+        <tr><td>Task model has $translatable set without HasTranslations trait</td><td><span class="ba">Medium</span></td><td>Add use HasTranslations or remove $translatable</td></tr>
+        <tr><td>Veterinarian role returns empty task list — they cannot see tasks to act on medical ones</td><td><span class="bg">Low</span></td><td>Add Veterinarian case to filterByRole() showing medical/inspection tasks</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 6. DATABASE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="db-schema">
+  <h2 class="sh"><span class="pill">6</span> Database Schema</h2>
+  <h3 class="sh3">6.1 Core Table Map</h3>
+  <div class="erd">
+    <div class="erd-table">
+      <div class="erd-head">users</div>
+      <div class="erd-row"><span class="pk">PK</span> id <span class="type">bigint</span></div>
+      <div class="erd-row"><span></span> name, email, password <span class="type">string</span></div>
+      <div class="erd-row"><span></span> role <span class="type">ENUM(Admin,Manager,Owner,Shepherd,Doctor)</span></div>
+      <div class="erd-row"><span class="fk">FK</span> subscription_tier_id → subscription_tiers</div>
+      <div class="erd-row"><span class="fk">FK</span> managed_by → users(self-ref)</div>
+      <div class="erd-row"><span></span> is_active, language <span class="type">bool/string</span></div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">animals</div>
+      <div class="erd-row"><span class="pk">PK</span> id <span class="type">bigint</span></div>
+      <div class="erd-row"><span></span> animal_id <span class="type">UNIQUE string (OA-YYYY-NNNN)</span></div>
+      <div class="erd-row"><span></span> species <span class="type">ENUM(Camel,Goat,Sheep) ⚠️ not FK</span></div>
+      <div class="erd-row"><span></span> breed, gender, color_markings <span class="type">string</span></div>
+      <div class="erd-row"><span></span> current_weight, baseline_temperature <span class="type">decimal</span></div>
+      <div class="erd-row"><span class="fk">FK</span> owner_id → users (nullable, setNull)</div>
+      <div class="erd-row"><span></span> device_id <span class="type">⚠️ string, not FK</span></div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">devices</div>
+      <div class="erd-row"><span class="pk">PK</span> id <span class="type">bigint</span></div>
+      <div class="erd-row"><span></span> device_id <span class="type">UNIQUE string</span></div>
+      <div class="erd-row"><span></span> battery_level, signal_strength <span class="type">int</span></div>
+      <div class="erd-row"><span></span> status <span class="type">ENUM(online,offline,low_signal)</span></div>
+      <div class="erd-row"><span></span> gps_lat, gps_lng <span class="type">decimal(10,7)</span></div>
+      <div class="erd-row"><span class="fk">FK</span> animal_id → animals (nullable, setNull)</div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">location_history</div>
+      <div class="erd-row"><span class="pk">PK</span> id <span class="type">bigint</span></div>
+      <div class="erd-row"><span class="fk">FK</span> animal_id → animals</div>
+      <div class="erd-row"><span class="fk">FK</span> device_id → devices</div>
+      <div class="erd-row"><span></span> latitude, longitude <span class="type">decimal(10,7)</span></div>
+      <div class="erd-row"><span></span> speed, heading <span class="type">decimal</span></div>
+      <div class="erd-row"><span></span> recorded_at <span class="type">timestamp</span></div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">geofences</div>
+      <div class="erd-row"><span class="pk">PK</span> id <span class="type">bigint</span></div>
+      <div class="erd-row"><span></span> name <span class="type">string</span></div>
+      <div class="erd-row"><span></span> coordinates <span class="type">TEXT (JSON) ⚠️ not GEOMETRY</span></div>
+      <div class="erd-row"><span></span> alert_type <span class="type">ENUM(entry,exit,both)</span></div>
+      <div class="erd-row"><span class="fk">FK</span> owner_id → users (nullable)</div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">auctions</div>
+      <div class="erd-row"><span class="pk">PK</span> id</div>
+      <div class="erd-row"><span class="fk">FK</span> animal_id → animals (cascade)</div>
+      <div class="erd-row"><span class="fk">FK</span> owner_id → users (cascade)</div>
+      <div class="erd-row"><span class="fk">FK</span> winner_id → users (nullable, setNull)</div>
+      <div class="erd-row"><span></span> status <span class="type">ENUM(draft,active,ended,sold,cancelled)</span></div>
+      <div class="erd-row"><span></span> starting_price, current_price, reserve_price <span class="type">decimal(12,2)</span></div>
+      <div class="erd-row"><span></span> payment_status, payment_proof_url <span class="type">⚠️ added in later migration</span></div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">tasks</div>
+      <div class="erd-row"><span class="pk">PK</span> id</div>
+      <div class="erd-row"><span class="fk">FK</span> owner_id → users (cascade)</div>
+      <div class="erd-row"><span class="fk">FK</span> assigned_to → users (cascade)</div>
+      <div class="erd-row"><span class="fk">FK</span> animal_id → animals (nullable, setNull)</div>
+      <div class="erd-row"><span class="fk">FK</span> geofence_id → geofences (nullable, setNull)</div>
+      <div class="erd-row"><span></span> priority, status, task_type <span class="type">ENUM</span></div>
+      <div class="erd-row"><span></span> is_recurring, recurrence_type, recurrence_days <span class="type">added in migration_2</span></div>
+    </div>
+    <div class="erd-table">
+      <div class="erd-head">subscription_tiers</div>
+      <div class="erd-row"><span class="pk">PK</span> id</div>
+      <div class="erd-row"><span></span> slug <span class="type">UNIQUE string</span></div>
+      <div class="erd-row"><span></span> max_animals, max_devices, max_users <span class="type">int (0 = unlimited)</span></div>
+      <div class="erd-row"><span></span> has_geofencing, has_auctions, has_advanced_reports, has_api_access <span class="type">bool</span></div>
+      <div class="erd-row"><span></span> price_monthly, price_yearly <span class="type">decimal(10,2)</span></div>
+      <div class="erd-row"><span></span> ⚠️ missing: has_medical_records, has_tasks, has_ai_assistant</div>
+    </div>
+  </div>
+</section>
+
+<section id="db-relations">
+  <h3 class="sh3">6.2 Relationship Summary</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>From</th><th>To</th><th>Type</th><th>Pivot / FK</th><th>OnDelete</th></tr></thead>
+      <tbody>
+        <tr><td>User</td><td>Animal</td><td>hasMany</td><td>animals.owner_id</td><td>setNull (animal survives owner delete)</td></tr>
+        <tr><td>User</td><td>User (self)</td><td>hasMany / belongsTo</td><td>users.managed_by</td><td>No cascade — orphan risk</td></tr>
+        <tr><td>Animal</td><td>Device</td><td>hasOne</td><td>devices.animal_id</td><td>setNull</td></tr>
+        <tr><td>Animal</td><td>LocationHistory</td><td>hasMany</td><td>location_history.animal_id</td><td>cascade ⚠️ deleting animal wipes history</td></tr>
+        <tr><td>Animal</td><td>Geofence</td><td>belongsToMany</td><td>animal_geofence pivot</td><td>pivot only</td></tr>
+        <tr><td>Animal</td><td>AnimalGroup</td><td>belongsToMany</td><td>animal_group_member pivot</td><td>pivot only</td></tr>
+        <tr><td>Geofence</td><td>GeofenceAlert</td><td>hasMany</td><td>geofence_alerts.geofence_id</td><td>cascadeOnDelete ⚠️ deleting zone wipes all alerts</td></tr>
+        <tr><td>Geofence</td><td>AnimalGroup</td><td>belongsToMany</td><td>animal_group_geofence pivot</td><td>pivot only</td></tr>
+        <tr><td>Auction</td><td>Bid</td><td>hasMany</td><td>bids.auction_id</td><td>cascade (implied)</td></tr>
+        <tr><td>Auction</td><td>User (winner)</td><td>belongsTo</td><td>auctions.winner_id</td><td>setNull</td></tr>
+        <tr><td>Task</td><td>User (owner)</td><td>belongsTo</td><td>tasks.owner_id</td><td>cascade ⚠️ deleting owner deletes all tasks</td></tr>
+        <tr><td>Task</td><td>User (assignee)</td><td>belongsTo</td><td>tasks.assigned_to</td><td>cascade ⚠️ deleting shepherd deletes their tasks</td></tr>
+        <tr><td>User</td><td>SubscriptionTier</td><td>belongsTo</td><td>users.subscription_tier_id</td><td>no FK constraint defined</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="db-indexes">
+  <h3 class="sh3">6.3 Index Analysis</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Table</th><th>Indexes Present</th><th>Missing Indexes</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr><td>tasks</td><td>(assigned_to, status), (owner_id, status), due_date</td><td>—</td><td>Well-indexed for common queries</td></tr>
+        <tr><td>location_history</td><td>animal_id FK, device_id FK</td><td><strong>(animal_id, recorded_at) composite</strong></td><td>Time-range queries (GET /animals/{id}/location-history?hours=48) do full index scan without composite key</td></tr>
+        <tr><td>auctions</td><td>animal_id FK, owner_id FK, winner_id FK</td><td><strong>(status, ends_at) composite</strong></td><td>Active auction listings filter by status + order by ends_at — slow without this index</td></tr>
+        <tr><td>users</td><td>email UNIQUE</td><td><strong>managed_by</strong></td><td>Manager hierarchy queries (WHERE managed_by = ?) do full scan</td></tr>
+        <tr><td>geofence_alerts</td><td>geofence_id FK, animal_id FK</td><td><strong>(is_acknowledged, triggered_at)</strong></td><td>Alert listing filtered by acknowledged + sorted by triggered_at — full scan</td></tr>
+        <tr><td>bids</td><td>auction_id FK, user_id FK</td><td><strong>(auction_id, amount DESC)</strong></td><td>highestBid() and secondHighestBid() sort by amount — partial index would help</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="db-issues">
+  <h3 class="sh3">6.4 Schema Issues</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>users migration still has role ENUM with 'Doctor' (never updated in migration)</td><td><span class="ba">Medium</span></td><td>Create migration to ALTER COLUMN role ENUM to current valid set</td></tr>
+        <tr><td>animals.device_id is a VARCHAR column, not a FK to devices — orphan data possible</td><td><span class="ba">Medium</span></td><td>Remove animals.device_id; relationship is properly via devices.animal_id FK</td></tr>
+        <tr><td>subscription_tiers missing columns: has_medical_records, has_tasks, has_ai_assistant</td><td><span class="ba">Medium</span></td><td>Add migration to add missing feature flags</td></tr>
+        <tr><td>geofence_alerts migration missing latitude, longitude, notification_sent, notification_sent_at</td><td><span class="ba">Medium</span></td><td>Add additive migration with those columns</td></tr>
+        <tr><td>tasks.owner_id ON DELETE CASCADE — deleting an Owner deletes all their tasks</td><td><span class="ba">Medium</span></td><td>Change to setNull or restrict to prevent data loss</td></tr>
+        <tr><td>tasks.assigned_to ON DELETE CASCADE — deleting a Shepherd deletes their task history</td><td><span class="ba">Medium</span></td><td>Change to setNull (assigned_to nullable) to preserve task records</td></tr>
+        <tr><td>Missing composite indexes: (animal_id, recorded_at), (status, ends_at), managed_by</td><td><span class="ba">Medium</span></td><td>Add migration with the indexes listed in 6.3</td></tr>
+        <tr><td>geofences.coordinates stored as TEXT (not GEOMETRY) — no spatial indexing</td><td><span class="bg">Low</span></td><td>Migrate to POLYGON type (requires coordinate format change)</td></tr>
+        <tr><td>No soft deletes on any model — hard deletes cascade and lose history</td><td><span class="bg">Low</span></td><td>Add SoftDeletes to User, Animal, Task at minimum</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 7. SCALABILITY -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="scale-immediate">
+  <h2 class="sh"><span class="pill">7</span> Scalability Improvements</h2>
+  <h3 class="sh3">7.1 Immediate (Must Fix Before Load)</h3>
+  <div class="scale-grid">
+    <div class="scale-card crit">
+      <h4>🔴 Queue Notifications Asynchronously</h4>
+      <p>Every GPS ping that triggers a geofence alert blocks the HTTP response while sending SMS + WhatsApp + calls synchronously. Under load this will cause GPS device timeouts and dropped pings.<br><br>
+      Set <code>QUEUE_CONNECTION=redis</code>, run <code>php artisan queue:work</code>, and dispatch <code>SendGeofenceAlert::dispatch($alert)</code> as a queued job.</p>
+    </div>
+    <div class="scale-card crit">
+      <h4>🔴 Fix Geofence Query (Scope to Animal)</h4>
+      <p>Replace the full-table geofence scan with a scoped relationship query:<br>
+      <code>$animal->geofences()->where('is_active',true)->get()</code><br><br>
+      This turns an O(total_geofences) scan into an O(animal_geofences) lookup — orders of magnitude faster at scale.</p>
+    </div>
+    <div class="scale-card crit">
+      <h4>🔴 Switch Cache to Redis</h4>
+      <p>Geofence entry/exit state is stored in file cache with 24h TTL. With <code>CACHE_DRIVER=file</code>:<br>— State is lost on server restart (false alerts on reboot)<br>— Does not work across multiple app servers<br><br>Switch to Redis for both cache and sessions.</p>
+    </div>
+    <div class="scale-card warn">
+      <h4>🟡 Add Missing DB Indexes</h4>
+      <p>Add a migration with:<br>
+      <code>(animal_id, recorded_at)</code> on location_history<br>
+      <code>(status, ends_at)</code> on auctions<br>
+      <code>managed_by</code> on users<br>
+      <code>(is_acknowledged, triggered_at)</code> on geofence_alerts<br><br>
+      These will eliminate full-index scans on the most common queries.</p>
+    </div>
+    <div class="scale-card warn">
+      <h4>🟡 Move location_history Cleanup to Scheduler</h4>
+      <p>Deleting 5h-old rows inline with every GPS write adds latency and locks the table during deletes. Move to a scheduled command:<br>
+      <code>$schedule->command('location-history:prune')->hourly()</code><br>
+      Consider increasing retention to 24h for meaningful heatmaps.</p>
+    </div>
+    <div class="scale-card warn">
+      <h4>🟡 Cache NotificationService Settings</h4>
+      <p><code>getSetting()</code> hits the DB every call. With 8 calls per alert and sync queue, that's 8 blocking DB round-trips before a single message goes out:<br><br>
+      <code>Cache::remember('app_settings', 300, fn() => DB::table('settings')->pluck('value','key')->toArray());</code></p>
+    </div>
+  </div>
+</section>
+
+<section id="scale-medium">
+  <h3 class="sh3">7.2 Medium-Term (Architecture)</h3>
+  <div class="scale-grid">
+    <div class="scale-card">
+      <h4>Add a Scheduled Task Runner</h4>
+      <p>The kernel's scheduler (<code>app/Console/Kernel.php</code>) appears empty. Register the following commands:<br>
+      — <code>auctions:expire-payments</code> → hourly<br>
+      — <code>location-history:prune</code> → hourly<br>
+      — <code>sanctum:prune-expired</code> → daily<br>
+      — <code>vaccinations:check-overdue</code> → daily<br>
+      — <code>tasks:check-overdue</code> → daily</p>
+    </div>
+    <div class="scale-card">
+      <h4>Paginate location_history</h4>
+      <p><code>GET /animals/{id}/location-history</code> returns all rows for the last N hours with no pagination. For active animals this could be thousands of records per request. Add <code>->paginate()</code> or <code>->limit(500)</code> with cursor pagination for the map view.</p>
+    </div>
+    <div class="scale-card">
+      <h4>Migrate Images to Cloud Storage</h4>
+      <p>Animal photos and payment proofs are stored on the local filesystem (<code>public/images/</code>, <code>storage/payment-proofs/</code>). This breaks horizontal scaling and is lost if the server is reprovisioned. Configure <code>FILESYSTEM_DISK=s3</code> and use S3 or Cloudflare R2 with signed URLs.</p>
+    </div>
+    <div class="scale-card">
+      <h4>Introduce API Resource Caching</h4>
+      <p>Subscription tier listings, species/breed reference data, and user features are read-heavy and change rarely. Wrap them with <code>Cache::tags(['tiers'])->remember()</code> for 10-minute TTL. Bust the cache on admin update.</p>
+    </div>
+    <div class="scale-card">
+      <h4>Fix Auction Bidding Transaction</h4>
+      <p>Wrap bid creation in a pessimistic lock:<br>
+      <code>DB::transaction(function() use ($auction, $amount, $userId) {<br>
+      &nbsp;&nbsp;$auction = Auction::lockForUpdate()->find($id);<br>
+      &nbsp;&nbsp;// validate + insert + update current_price<br>
+      });</code><br>This prevents double-bids under concurrent traffic.</p>
+    </div>
+    <div class="scale-card">
+      <h4>Implement Push Notifications</h4>
+      <p>Geofence alerts require the user to open the app to see them. Integrate Firebase Cloud Messaging (FCM) for Android and APNs for iOS. Store device push tokens in a <code>push_tokens</code> table linked to users. Fire push notifications from the queued geofence alert job.</p>
+    </div>
+  </div>
+</section>
+
+<section id="scale-longterm">
+  <h3 class="sh3">7.3 Long-Term (Architecture Evolution)</h3>
+  <div class="scale-grid">
+    <div class="scale-card ok">
+      <h4>✅ GPS Ingestion: Dedicated Microservice or Queue</h4>
+      <p>At scale (thousands of GPS devices pinging every 15s), the current synchronous HTTP endpoint cannot keep up. Consider:<br>
+      — A dedicated MQTT broker (e.g. Mosquitto/HiveMQ) for device data<br>
+      — A Go/Node.js consumer writing to location_history at high throughput<br>
+      — Geofence checks as async workers, not inline HTTP</p>
+    </div>
+    <div class="scale-card ok">
+      <h4>✅ MySQL Spatial Types for Geofencing</h4>
+      <p>Replace <code>coordinates TEXT</code> with <code>POLYGON GEOMETRY</code>. This unlocks:<br>
+      — <code>ST_Contains(geofence.polygon, ST_GeomFromText('POINT(lat lng)'))</code> at DB level<br>
+      — Spatial index (SPATIAL INDEX) for fast zone lookups<br>
+      — No more PHP ray-casting in application code</p>
+    </div>
+    <div class="scale-card ok">
+      <h4>✅ Time-Series DB for location_history</h4>
+      <p>Location data is a time-series by nature. A dedicated time-series store (InfluxDB, TimescaleDB) would:<br>
+      — Handle millions of GPS pings efficiently<br>
+      — Provide native time-range queries and downsampling<br>
+      — Eliminate the manual 5h cleanup hack<br>
+      — Enable analytics like average daily distance</p>
+    </div>
+    <div class="scale-card ok">
+      <h4>✅ Sanctum Token Expiry + Refresh Tokens</h4>
+      <p>Sanctum tokens currently live forever. Add token expiry in <code>config/sanctum.php</code>:<br>
+      <code>'expiration' => 60 * 24 * 30</code> (30 days)<br>
+      Add a refresh-token flow or re-authentication prompt. Run <code>sanctum:prune-expired</code> daily to clean the tokens table.</p>
+    </div>
+    <div class="scale-card ok">
+      <h4>✅ API Versioning</h4>
+      <p>No versioning prefix exists. Any breaking change to an endpoint affects all clients simultaneously. Add a route group:<br>
+      <code>Route::prefix('v1')->group(fn() => require 'api_v1.php');</code><br>
+      Mobile clients can pin to v1 while v2 ships with breaking changes.</p>
+    </div>
+    <div class="scale-card ok">
+      <h4>✅ Read Replica + Connection Management</h4>
+      <p>For production load, configure a MySQL read replica in <code>config/database.php</code>:<br>
+      <code>'read' => [['host' => env('DB_READ_HOST')]],<br>
+      'write' => [['host' => env('DB_HOST')]]</code><br>
+      All SELECT queries route to the replica automatically, reducing write server pressure.</p>
+    </div>
+  </div>
+</section>
+
+<div style="margin-top:56px;padding:22px;background:var(--gray1);border-radius:8px;font-size:12px;color:#888;text-align:center;border:1px solid var(--gray2)">
+  Oasis Backend Deep Analysis &nbsp;·&nbsp; May 2026 &nbsp;·&nbsp; oasis/trace v1.0 &nbsp;·&nbsp; Confidential
+</div>
+
+</div><!-- /.main -->
+
+<script>
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.sidebar nav a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const l = document.querySelector(`.sidebar nav a[href="#${e.target.id}"]`);
+      if (l) l.classList.add('active');
+    }
+  });
+}, {rootMargin:'-5% 0px -90% 0px'});
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
