@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { I18nProvider } from './i18n.jsx';
@@ -46,6 +47,7 @@ const SHEPHERD = 'Shepherd';
 
 function App() {
   return (
+    <ErrorBoundary>
     <I18nProvider>
       <AuthProvider>
         <PlatformProvider>
@@ -95,6 +97,7 @@ function App() {
         </PlatformProvider>
       </AuthProvider>
     </I18nProvider>
+    </ErrorBoundary>
   );
 }
 
