@@ -80,7 +80,7 @@ export function useI18n() {
   return {
     t,
     dir: i18nInstance.dir(),
-    language: i18nInstance.language,
+    language: i18nInstance.language || 'en',
     changeLanguage: (lng) => {
       i18nInstance.changeLanguage(lng);
       document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';

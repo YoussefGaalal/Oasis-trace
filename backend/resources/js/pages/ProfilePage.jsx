@@ -6,7 +6,7 @@ import { useI18n } from '../i18n';
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const { t, dir, setLanguage, language } = useI18n();
+  const { t, dir, changeLanguage, language } = useI18n();
   const isRtl = dir === 'rtl';
 
   const [activeTab, setActiveTab] = useState('profile');
@@ -263,7 +263,7 @@ export default function ProfilePage() {
               <h4 className="font-bold text-[#002819] mb-4">{t('profile.language')}</h4>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => changeLanguage(e.target.value)}
                 className="w-full bg-[#F4F4EF] border-none rounded-xl p-4 text-[#002819]"
               >
                 <option value="en">English (US)</option>
