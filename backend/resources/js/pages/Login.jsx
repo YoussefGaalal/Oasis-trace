@@ -6,7 +6,7 @@ import { useI18n } from '../i18n.jsx';
 import { usePlatform } from '../context/PlatformContext';
 
 export default function Login() {
-  const { t, dir } = useI18n();
+  const { t, dir, language, changeLanguage } = useI18n();
   const { platformName } = usePlatform();
   const isRtl = dir === 'rtl';
 
@@ -283,35 +283,4 @@ export default function Login() {
               ) : (
                 <MaterialSymbol icon={isLogin ? "login" : "person_add"} size={20} weight="fill" />
               )}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-8 border-t border-[#E3E3DE] text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-              }}
-              className="text-sm text-[#404943]"
-            >
-              {isLogin ? t('auth.noAccount') : t('auth.haveAccount')}{' '}
-              <span className="text-[#002819] font-bold hover:text-[#D4AF37] transition-colors">
-                {isLogin ? t('auth.register') : t('auth.login')}
-              </span>
-            </button>
-          </div>
-        </div>
-        </div>
-       </div>
-
-       <footer className={`py-6 px-12 z-20 bg-[#06402B] ${isRtl ? 'flex-row-reverse' : ''}`}>
-         <div className={`flex justify-center items-center max-w-screen-2xl mx-auto ${isRtl ? 'flex-row-reverse' : ''}`}>
-             <p className="text-white/80 font-medium text-sm">
-             © 2024 {platformName}. Digital Majlis.
-           </p>
-         </div>
-       </footer>
-    </div>
-  );
-}
+     
