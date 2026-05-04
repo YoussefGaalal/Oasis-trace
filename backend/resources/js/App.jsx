@@ -38,7 +38,6 @@ import SettingsPage from './pages/SettingsPage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
-// Role constants
 const ADMIN = 'Admin';
 const OWNER = 'Owner';
 const MANAGER = 'Manager';
@@ -77,19 +76,19 @@ function App() {
                 <Route path="alerts" element={<AlertsPage />} />
                 <Route path="geofences" element={<GeofenceList />} />
                 <Route path="animal-groups" element={<AnimalGroupList />} />
-                <Route path="subscription" element={<RoleRoute role={[ADMIN, OWNER]}><SubscriptionsPage /></RoleRoute>} />
-                <Route path="subscription/tiers" element={<RoleRoute role={[ADMIN, OWNER]}><SubscriptionsPage /></RoleRoute>} />
+                <Route path="subscription" element={<SubscriptionsPage />} />
+                <Route path="subscription/tiers" element={<SubscriptionsPage />} />
                 <Route path="subscription/select" element={<SubscriptionPage />} />
                 <Route path="profile" element={<ProfilePage />} />
-                <Route path="settings" element={<RoleRoute role={[ADMIN]}><SettingsPage /></RoleRoute>} />
-                <Route path="medical-records" element={<RoleRoute role={[ADMIN, OWNER, DOCTOR]}><MedicalRecordsPage /></RoleRoute>} />
-                <Route path="vaccination-schedule" element={<RoleRoute role={[ADMIN, OWNER, DOCTOR]}><VaccinationSchedulePage /></RoleRoute>} />
-                <Route path="team" element={<RoleRoute role={[ADMIN, OWNER]}><TeamPage /></RoleRoute>} />
-                <Route path="reports" element={<RoleRoute role={[ADMIN, OWNER, MANAGER]}><ReportsPage /></RoleRoute>} />
+                <Route path="settings" element={<RoleRoute role={[ADMIN, OWNER]}><SettingsPage /></RoleRoute>} />
+                <Route path="medical-records" element={<MedicalRecordsPage />} />
+                <Route path="vaccination-schedule" element={<VaccinationSchedulePage />} />
+                <Route path="team" element={<RoleRoute role={[ADMIN, OWNER, MANAGER]}><TeamPage /></RoleRoute>} />
+                <Route path="reports" element={<ReportsPage />} />
                 <Route path="tasks" element={<TasksPage />} />
-                <Route path="task-logs-archive" element={<RoleRoute role={[ADMIN, OWNER]}><TaskLogsArchive /></RoleRoute>} />
-                <Route path="payments" element={<RoleRoute role={[ADMIN]}><PaymentManagement /></RoleRoute>} />
-                <Route path="my-payments" element={<RoleRoute role={[ADMIN, OWNER]}><MyPayments /></RoleRoute>} />
+                <Route path="task-logs-archive" element={<TaskLogsArchive />} />
+                <Route path="payments" element={<RoleRoute role={[ADMIN, OWNER]}><PaymentManagement /></RoleRoute>} />
+                <Route path="my-payments" element={<MyPayments />} />
               </Route>
             </Routes>
           </BrowserRouter>

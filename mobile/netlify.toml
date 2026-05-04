@@ -1,0 +1,8 @@
+[build]
+  command = "flutter build web --dart-define=API_URL=https://YOUR-RAILWAY-APP.railway.app/api --release"
+  publish = "build/web"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

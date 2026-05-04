@@ -85,3 +85,5 @@ export const verifyResetToken = async (email, token) => {
 
   return response.json();
 };
+turn fetch(fullUrl, fetchOptions);
+};

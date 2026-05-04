@@ -22,3 +22,6 @@ return new class extends Migration
         DB::statement("ALTER TABLE animals MODIFY COLUMN gender ENUM('Male','Female') NOT NULL");
     }
 };
+
+    }
+};
