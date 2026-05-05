@@ -56,6 +56,22 @@ Backend_Deep_Analysis.html
 # ----- Claude / Cowork internal files ----------------------
 .claude/
 
+# ----- OpenCode local config & skills (developer tooling, not project code) ---
+.opencode/
+opencode.json
+opencode.json.tui-migration.bak
+tui.json
+AGENTS.md
+
+# ----- Local scripts & deploy helpers (Windows-only, not for CI) ------------
+deploy.ps1
+install-bmad-skills.ps1
+
+# ----- Internal documents & large artifacts ---------------------------------
+the-oasis-*.docx
+oasis-trace-OG.zip
+*.zip
+
 # ----- Word temp files --------------------------------------
 ~$*.docx
 ~$*.xlsx
