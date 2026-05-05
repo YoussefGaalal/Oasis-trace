@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { I18nProvider } from './i18n.jsx';
 import { PlatformProvider } from './context/PlatformContext';
 import { ProtectedRoute, RoleRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
 import AnimalList from './pages/AnimalList';
