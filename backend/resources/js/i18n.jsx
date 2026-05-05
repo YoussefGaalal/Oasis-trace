@@ -2,11 +2,16 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { useTranslation, I18nextProvider } from 'react-i18next';
 import { useEffect } from 'react';
+import enFull from './i18n/en.js';
+import arFull from './i18n/ar.js';
 
 const resources = {
   en: {
     translation: {
+      ...enFull,
+      // Login page overrides
       auth: {
+        ...(enFull.auth || {}),
         login: 'Sign in to your account',
         register: 'Create your account',
         email: 'Email address',
@@ -17,27 +22,18 @@ const resources = {
         noAccount: "Don't have an account?",
         haveAccount: 'Already have an account?',
       },
-      users: {
-        name: 'Full name',
-        phone: 'Phone number',
-      },
       errors: {
         unauthorized: 'Invalid credentials',
         serverError: 'Server error',
         networkError: 'Network error',
       },
-      common: {
-        loading: 'Loading...',
-        language: 'Language',
-      },
-      platform: {
-        name: 'Oasis Trace',
-      },
     },
   },
   ar: {
     translation: {
+      ...arFull,
       auth: {
+        ...(arFull.auth || {}),
         login: 'تسجيل الدخول إلى حسابك',
         register: 'إنشاء حساب جديد',
         email: 'البريد الإلكتروني',
@@ -48,21 +44,10 @@ const resources = {
         noAccount: 'ليس لديك حساب؟',
         haveAccount: 'لديك حساب بالفعل؟',
       },
-      users: {
-        name: 'الاسم الكامل',
-        phone: 'رقم الهاتف',
-      },
       errors: {
         unauthorized: 'بيانات الدخول غير صحيحة',
         serverError: 'خطأ في الخادم',
         networkError: 'خطأ في الاتصال',
-      },
-      common: {
-        loading: 'جاري التحميل...',
-        language: 'اللغة',
-      },
-      platform: {
-        name: 'أواسيس تريس',
       },
     },
   },
@@ -83,6 +68,7 @@ export function useI18n() {
     language: i18nInstance.language || 'en',
     changeLanguage: (lng) => {
       i18nInstance.changeLanguage(lng);
+      localStorage.setItem('i18nextLng', lng);
       document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
       document.documentElement.lang = lng;
     },
